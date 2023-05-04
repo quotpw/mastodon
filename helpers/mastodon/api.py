@@ -143,3 +143,14 @@ class Mastodon(APIClass):
             params=params
         )
         return response.json(), helpers.extract_link(response)
+
+    def private_mention(self, text: str):
+        return self.post(
+            '/api/v1/statuses',
+            files={
+                'status': (None, text),
+                'sensitive': (None, 'false'),
+                'visibility': (None, 'direct'),
+                'language': (None, 'en')
+            }
+        ).json()

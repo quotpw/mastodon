@@ -1,8 +1,13 @@
 class StringCounter:
     def __init__(self, path, unique=True):
-        self.strings = [line.strip() for line in open(path).read().split('\n')]
+        self.strings = [line.strip() for line in open(path).read().replace('\r', '').split('\n')]
         if unique:
             self.strings = list(set(self.strings))
+        self.strings = [string for string in self.strings if string]
+
+        if not self.strings:
+            raise Exception("No strings")
+
         self.index = 0
 
     def get(self):

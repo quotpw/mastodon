@@ -10,7 +10,7 @@ from helpers.proxy import ProxyCounter
 def statistics(args: Args):
     while args.work:
         set_console_title(f"Parsed: {args.stats.parsed}")
-        time.sleep(3)
+        time.sleep(1)
 
 
 def start():

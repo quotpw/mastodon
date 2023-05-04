@@ -11,7 +11,7 @@ from helpers.proxy import ProxyCounter
 def statistics(args: Args):
     while args.work:
         set_console_title(f"Registered: {args.stats.registered}; Errors: {args.stats.errors}")
-        time.sleep(3)
+        time.sleep(1)
 
 
 def start():

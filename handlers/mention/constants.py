@@ -1,0 +1,2 @@
+SLEEP = 3
+MAX_POSTS = 10
