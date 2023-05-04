@@ -1,3 +1,6 @@
+import datetime
+import time
+
 import requests
 
 from ..api import APIClass
@@ -6,11 +9,16 @@ from . import helpers
 
 
 class Mastodon(APIClass):
-    def __init__(self, proxy: str = None):
+    def __init__(self, proxy: str = None, account: str = None):
         self.session = requests.Session()
         self.session.verify = False
         self.session.proxies = {"http": proxy, "https": proxy} if proxy else None
         self.access_token = None
+        self.rate_limit = {
+            'limit': 300,
+            'remaining': 300,
+            'reset': time.time() + 900
+        }
         super().__init__(
             self,
             constants.BASE_URL,
@@ -21,6 +29,43 @@ class Mastodon(APIClass):
                 "Cache-Control": "no-cache",
             }
         )
+
+        if account is not None:
+            self.account = account.split(':')
+            self.account = {
+                'username': self.account[0],
+                'mail': self.account[1],
+                'password': self.account[2],
+                'token_type': 'Bearer',
+                'access_token': self.account[3]
+            }
+            self.set_auth(self.account)
+        else:
+            self.account = None
+
+        self.pre_middlewares.append(self.pre_middleware)
+        self.post_middlewares.append(self.post_middleware)
+
+    def id(self):
+        if self.account is not None:
+            return f"[{self.account['username']}]"
+        else:
+            return "[Mastodon]"
+
+    def pre_middleware(self, method: str, url: str, kwargs: dict):
+        if self.rate_limit['remaining'] <= 1:
+            print(self.id(), "Rate limit exceeded, waiting for reset")
+            time.sleep(self.rate_limit['reset'] - time.time())
+        return method, url, kwargs
+
+    def post_middleware(self, method: str, url: str, kwargs: dict, response: requests.Response):
+        h = response.headers
+        if h.get('x-ratelimit-limit'):
+            self.rate_limit['limit'] = int(h['x-ratelimit-limit'])
+        if h.get('x-ratelimit-remaining'):
+            self.rate_limit['remaining'] = int(h['x-ratelimit-remaining'])
+        if h.get('x-ratelimit-reset'):
+            self.rate_limit['reset'] = int(datetime.datetime.fromisoformat(h['x-ratelimit-reset'][:-1]).timestamp())
 
     def set_auth(self, data: dict):
         self.access_token = data["access_token"]
